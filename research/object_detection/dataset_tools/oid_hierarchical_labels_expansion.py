@@ -144,9 +144,9 @@ class OIDHierarchicalLabelsExpansion(object):
 def main(argv):
 
   if len(argv) < 4:
-    print """Missing arguments. \n
+    print ("""Missing arguments. \n
              Usage: ./hierarchical_labels_expansion <path to JSON hierarchy>
-             <input csv file> <output csv file> [optional]labels_file"""
+             <input csv file> <output csv file> [optional]labels_file""")
     return
   with open(argv[1]) as f:
     hierarchy = json.load(f)

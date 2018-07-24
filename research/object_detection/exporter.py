@@ -185,7 +185,7 @@ input_placeholder_fn_map = {
 }
 
 
-def _add_output_tensor_nodes(postprocessed_tensors,
+def _add_output_tensor_nodes(postprocessed_tensors, output_tensors,
                              output_collection_name='inference_op'):
   """Adds output nodes for detection boxes and scores.
 
@@ -225,7 +225,13 @@ def _add_output_tensor_nodes(postprocessed_tensors,
       detection_fields.detection_classes) + label_id_offset
   keypoints = postprocessed_tensors.get(detection_fields.detection_keypoints)
   masks = postprocessed_tensors.get(detection_fields.detection_masks)
+  bc_features = postprocessed_tensors.get(detection_fields.box_classifier_features)
+  block0_features = output_tensors.get(detection_fields.block0_features)
+  block1_features = output_tensors.get(detection_fields.block1_features)
+  block2_features = output_tensors.get(detection_fields.block2_features)
+  block3_features = output_tensors.get(detection_fields.block3_features)
   num_detections = postprocessed_tensors.get(detection_fields.num_detections)
+
   outputs = {}
   outputs[detection_fields.detection_boxes] = tf.identity(
       boxes, name=detection_fields.detection_boxes)
@@ -235,6 +241,16 @@ def _add_output_tensor_nodes(postprocessed_tensors,
       classes, name=detection_fields.detection_classes)
   outputs[detection_fields.num_detections] = tf.identity(
       num_detections, name=detection_fields.num_detections)
+  outputs[detection_fields.box_classifier_features] = tf.identity(
+      bc_features, name=detection_fields.box_classifier_features)
+  outputs[detection_fields.block0_features] = tf.identity(
+      block0_features, name=detection_fields.block0_features)
+  outputs[detection_fields.block1_features] = tf.identity(
+      block1_features, name=detection_fields.block1_features)
+  outputs[detection_fields.block2_features] = tf.identity(
+      block2_features, name=detection_fields.block2_features)
+  outputs[detection_fields.block3_features] = tf.identity(
+      block3_features, name=detection_fields.block3_features)
   if keypoints is not None:
     outputs[detection_fields.detection_keypoints] = tf.identity(
         keypoints, name=detection_fields.detection_keypoints)
@@ -332,7 +348,7 @@ def _get_outputs_from_inputs(input_tensors, detection_model,
       preprocessed_inputs, true_image_shapes)
   postprocessed_tensors = detection_model.postprocess(
       output_tensors, true_image_shapes)
-  return _add_output_tensor_nodes(postprocessed_tensors,
+  return _add_output_tensor_nodes(postprocessed_tensors, output_tensors,
                                   output_collection_name)
 
 

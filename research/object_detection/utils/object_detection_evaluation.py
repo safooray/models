@@ -139,6 +139,7 @@ class ObjectDetectionEvaluator(DetectionEvaluator):
     Raises:
       ValueError: If the category ids are not 1-indexed.
     """
+    print(categories)
     super(ObjectDetectionEvaluator, self).__init__(categories)
     self._num_classes = max([cat['id'] for cat in categories])
     if min(cat['id'] for cat in categories) < 1:
@@ -183,7 +184,7 @@ class ObjectDetectionEvaluator(DetectionEvaluator):
     """
     if image_id in self._image_ids:
       raise ValueError('Image with id {} already added.'.format(image_id))
-
+    print(image_id, groundtruth_dict)
     groundtruth_classes = (
         groundtruth_dict[standard_fields.InputDataFields.groundtruth_classes] -
         self._label_id_offset)

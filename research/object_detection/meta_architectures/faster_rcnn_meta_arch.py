@@ -756,15 +756,17 @@ class FasterRCNNMetaArch(model.DetectionModel):
             flattened_proposal_feature_maps,
             scope=self.second_stage_feature_extractor_scope))
 
+    self.box_classifier_features = box_classifier_features
+
     box_predictions = self._mask_rcnn_box_predictor.predict(
-        [box_classifier_features],
+        [self.box_classifier_features],
         num_predictions_per_location=[1],
         scope=self.second_stage_box_predictor_scope,
         predict_boxes_and_classes=True)
-
     refined_box_encodings = tf.squeeze(
         box_predictions[box_predictor.BOX_ENCODINGS],
         axis=1, name='all_refined_box_encodings')
+    
     class_predictions_with_background = tf.squeeze(
         box_predictions[box_predictor.CLASS_PREDICTIONS_WITH_BACKGROUND],
         axis=1, name='all_class_predictions_with_background')
@@ -772,13 +774,22 @@ class FasterRCNNMetaArch(model.DetectionModel):
     absolute_proposal_boxes = ops.normalized_to_image_coordinates(
         proposal_boxes_normalized, image_shape, self._parallel_iterations)
 
+
     prediction_dict = {
         'refined_box_encodings': refined_box_encodings,
         'class_predictions_with_background':
         class_predictions_with_background,
         'num_proposals': num_proposals,
         'proposal_boxes': absolute_proposal_boxes,
-        'box_classifier_features': box_classifier_features,
+        'box_classifier_features':  self.box_classifier_features,
+        fields.DetectionResultFields.block0_features:
+        self.endpoints['FirstStageFeatureExtractor/resnet_v1_50/conv1'],
+        fields.DetectionResultFields.block1_features:
+        self.endpoints['FirstStageFeatureExtractor/resnet_v1_50/block1'],
+        fields.DetectionResultFields.block2_features:
+        self.endpoints['FirstStageFeatureExtractor/resnet_v1_50/block2'],
+        fields.DetectionResultFields.block3_features:
+        self.endpoints['FirstStageFeatureExtractor/resnet_v1_50/block3'],
         'proposal_boxes_normalized': proposal_boxes_normalized,
     }
 
@@ -924,9 +935,11 @@ class FasterRCNNMetaArch(model.DetectionModel):
       image_shape: A 1-D tensor representing the input image shape.
     """
     image_shape = tf.shape(preprocessed_inputs)
-    rpn_features_to_crop, _ = self._feature_extractor.extract_proposal_features(
+    rpn_features_to_crop, endpoints = self._feature_extractor.extract_proposal_features(
         preprocessed_inputs, scope=self.first_stage_feature_extractor_scope)
 
+    #[tf.logging.info('Endpoint: {}, {}, {}'.format(key, endpoint.name, endpoint.get_shape().as_list())) for key, endpoint in endpoints.items()]
+    self.endpoints = endpoints
     feature_map_shape = tf.shape(rpn_features_to_crop)
     anchors = box_list_ops.concatenate(
         self._first_stage_anchor_generator.generate([(feature_map_shape[1],
@@ -1116,6 +1129,8 @@ class FasterRCNNMetaArch(model.DetectionModel):
             prediction_dict['num_proposals'],
             true_image_shapes,
             mask_predictions=mask_predictions)
+
+        tf.logging.error(detections_dict[fields.DetectionResultFields.box_classifier_features])
         return detections_dict
 
     if self._number_of_stages == 3:
@@ -1500,6 +1515,8 @@ class FasterRCNNMetaArch(model.DetectionModel):
                  [0, 0, 1], [-1, -1, -1]),
         [-1, self.max_num_proposals, self.num_classes])
     clip_window = self._compute_clip_window(image_shapes)
+    box_classifier_features = tf.reshape(self.box_classifier_features,
+                                         [-1, self.max_num_proposals, self.box_classifier_features.shape[1], self.box_classifier_features.shape[2], self.box_classifier_features.shape[3]])
     mask_predictions_batch = None
     if mask_predictions is not None:
       mask_height = mask_predictions.shape[2].value
@@ -1508,20 +1525,22 @@ class FasterRCNNMetaArch(model.DetectionModel):
       mask_predictions_batch = tf.reshape(
           mask_predictions, [-1, self.max_num_proposals,
                              self.num_classes, mask_height, mask_width])
-    (nmsed_boxes, nmsed_scores, nmsed_classes, nmsed_masks, _,
+    (nmsed_boxes, nmsed_scores, nmsed_classes, nmsed_masks, additional_fields,
      num_detections) = self._second_stage_nms_fn(
          refined_decoded_boxes_batch,
          class_predictions_batch,
          clip_window=clip_window,
          change_coordinate_frame=True,
          num_valid_boxes=num_proposals,
-         masks=mask_predictions_batch)
+         masks=mask_predictions_batch,
+         additional_fields={fields.DetectionResultFields.box_classifier_features:box_classifier_features})
     detections = {
         fields.DetectionResultFields.detection_boxes: nmsed_boxes,
         fields.DetectionResultFields.detection_scores: nmsed_scores,
         fields.DetectionResultFields.detection_classes: nmsed_classes,
         fields.DetectionResultFields.num_detections: tf.to_float(num_detections)
     }
+    detections.update(additional_fields)
     if nmsed_masks is not None:
       detections[fields.DetectionResultFields.detection_masks] = nmsed_masks
     return detections

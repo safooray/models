@@ -513,7 +513,7 @@ class SsdMetaArchTest(test_case.TestCase):
     with tf.Graph().as_default():
       _, num_classes, num_anchors, _ = self._create_model(
           random_example_sampling=True)
-    print num_classes, num_anchors
+    print (num_classes, num_anchors)
 
     def graph_fn(preprocessed_tensor, groundtruth_boxes1, groundtruth_boxes2,
                  groundtruth_classes1, groundtruth_classes2):

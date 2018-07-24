@@ -38,7 +38,7 @@ from object_detection.core import standard_fields as fields
 _TITLE_LEFT_MARGIN = 10
 _TITLE_TOP_MARGIN = 10
 STANDARD_COLORS = [
-    'AliceBlue', 'Chartreuse', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque',
+    'Chartreuse', 'Aqua', 'Azure', 'Beige', 'Bisque',
     'BlanchedAlmond', 'BlueViolet', 'BurlyWood', 'CadetBlue', 'AntiqueWhite',
     'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan',
     'DarkCyan', 'DarkGoldenRod', 'DarkGrey', 'DarkKhaki', 'DarkOrange',
@@ -59,7 +59,7 @@ STANDARD_COLORS = [
     'Red', 'RosyBrown', 'RoyalBlue', 'SaddleBrown', 'Green', 'SandyBrown',
     'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue', 'SlateBlue',
     'SlateGray', 'SlateGrey', 'Snow', 'SpringGreen', 'SteelBlue', 'GreenYellow',
-    'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White',
+    'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 
     'WhiteSmoke', 'Yellow', 'YellowGreen'
 ]
 
@@ -99,7 +99,7 @@ def draw_bounding_box_on_image_array(image,
                                      ymax,
                                      xmax,
                                      color='red',
-                                     thickness=4,
+                                     thickness=1,
                                      display_str_list=(),
                                      use_normalized_coordinates=True):
   """Adds a bounding box to an image (numpy array).
@@ -134,7 +134,7 @@ def draw_bounding_box_on_image(image,
                                ymax,
                                xmax,
                                color='red',
-                               thickness=4,
+                               thickness=1,
                                display_str_list=(),
                                use_normalized_coordinates=True):
   """Adds a bounding box to an image.
@@ -180,7 +180,7 @@ def draw_bounding_box_on_image(image,
   # instead of above.
   display_str_heights = [font.getsize(ds)[1] for ds in display_str_list]
   # Each display_str has a top and bottom margin of 0.05x.
-  total_display_str_height = (1 + 2 * 0.05) * sum(display_str_heights)
+  total_display_str_height = 0 # (1 + 2 * 0.05) * sum(display_str_heights)
 
   if top > total_display_str_height:
     text_bottom = top
@@ -189,17 +189,19 @@ def draw_bounding_box_on_image(image,
   # Reverse list and print from bottom to top.
   for display_str in display_str_list[::-1]:
     text_width, text_height = font.getsize(display_str)
+    text_width = 0
+    text_height = 0
     margin = np.ceil(0.05 * text_height)
     draw.rectangle(
         [(left, text_bottom - text_height - 2 * margin), (left + text_width,
                                                           text_bottom)],
         fill=color)
-    draw.text(
-        (left + margin, text_bottom - text_height - margin),
-        display_str,
-        fill='black',
-        font=font)
-    text_bottom -= text_height - 2 * margin
+    #draw.text(
+    #    (left + margin, text_bottom - text_height - margin),
+    #    display_str,
+    #    fill='black',
+    #    font=font)
+    #text_bottom -= text_height - 2 * margin
 
 
 def draw_bounding_boxes_on_image_array(image,
@@ -348,7 +350,7 @@ def draw_bounding_boxes_on_image_tensors(images,
       'max_boxes_to_draw': max_boxes_to_draw,
       'min_score_thresh': min_score_thresh,
       'agnostic_mode': False,
-      'line_thickness': 4
+      'line_thickness': 1
   }
 
   if instance_masks is not None and keypoints is None:

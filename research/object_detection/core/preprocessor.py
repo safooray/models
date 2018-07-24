@@ -817,6 +817,44 @@ def random_image_scale(image,
     return tuple(result)
 
 
+def image_scale(image, scale_ratio=0.5):
+  """Scales the image size.
+
+  Args:
+    image: rank 3 float32 tensor contains 1 image -> [height, width, channels].
+    masks: (optional) rank 3 float32 tensor containing masks with
+      size [height, width, num_masks]. The value is set to None if there are no
+      masks.
+    min_scale_ratio: minimum scaling ratio.
+    max_scale_ratio: maximum scaling ratio.
+    seed: random seed.
+    preprocess_vars_cache: PreprocessorCache object that records previously
+                           performed augmentations. Updated in-place. If this
+                           function is called multiple times with the same
+                           non-null cache, it will perform deterministically.
+
+  Returns:
+    image: image which is the same rank as input image.
+    masks: If masks is not none, resized masks which are the same rank as input
+      masks will be returned.
+  """
+  with tf.name_scope('ImageScale', values=[image]):
+    result = []
+    image_shape = tf.shape(image)
+    image_height = image_shape[0]
+    image_width = image_shape[1]
+
+    image_newysize = tf.to_int32(
+        tf.multiply(tf.to_float(image_height), scale_ratio))
+    image_newxsize = tf.to_int32(
+        tf.multiply(tf.to_float(image_width), scale_ratio))
+    image = tf.image.resize_images(
+        image, [image_newysize, image_newxsize], align_corners=True)
+    result.append(image)
+    result.append(tf.stack([image_newysize, image_newxsize, image_shape[2]]))
+    return result
+
+
 def random_rgb_to_gray(image,
                        probability=0.1,
                        seed=None,
