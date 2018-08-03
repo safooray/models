@@ -1,4 +1,4 @@
-# Copyright 2017 The TensorFlow Authors. All Rights Reserved.
+# Copyrigho 2017 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1130,7 +1130,6 @@ class FasterRCNNMetaArch(model.DetectionModel):
             true_image_shapes,
             mask_predictions=mask_predictions)
 
-        tf.logging.error(detections_dict[fields.DetectionResultFields.box_classifier_features])
         return detections_dict
 
     if self._number_of_stages == 3:

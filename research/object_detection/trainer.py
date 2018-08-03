@@ -406,6 +406,6 @@ def train(create_tensor_dict_fn,
         summary_op=summary_op,
         number_of_steps=(
             train_config.num_steps if train_config.num_steps else None),
-        save_summaries_secs=120,
+        save_interval_secs = 120,
         sync_optimizer=sync_optimizer,
         saver=saver)

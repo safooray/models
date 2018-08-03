@@ -151,8 +151,7 @@ def visualize_gt(img, gt_record, category_index={}):
     ymaxs = gt_record.features.feature['image/object/bbox/ymax'].float_list.value
     gt_boxes = np.array([ymins, xmins, ymaxs, xmaxs]).T
     # Visualization of theground truth.
-    if DRAW_GT:
-        vis_util.visualize_boxes_and_labels_on_image_array(
+    vis_util.visualize_boxes_and_labels_on_image_array(
           img,
           gt_boxes,
           None,
